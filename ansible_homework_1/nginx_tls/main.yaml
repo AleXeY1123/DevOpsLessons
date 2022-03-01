@@ -1,0 +1,112 @@
+---
+- name: configure webserver tls
+  hosts: nodes
+  gather_facts: true
+  become: true
+  vars:
+    nginx_port_tls: 443
+    path_keys: "/etc/nginx/ssl/private"
+  tasks:
+    - name: create nginx repo definition
+      copy:
+        src: nginx.repo
+        dest: /etc/yum.repos.d/nginx.repo
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: install nginx
+      yum:
+        name: nginx
+        update_cache: true
+        state: present
+
+    - name: copy main nginx config file
+      copy:
+        src: files/nginx.conf
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart nginx
+
+    - name: copy site's nginx config file
+      template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/conf.d/tls.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart nginx
+
+    - name: copy index.html
+      template:
+        src: templates/index.html.j2
+        dest: /usr/share/nginx/html/index.html
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart nginx
+
+    - name: install python-cryptography
+      yum:
+        name: python-cryptography
+        update_cache: true
+        state: present
+
+    - name: creates directory keys
+      file:
+        path: "{{ path_keys }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0775
+        recurse: yes
+    
+    - name: generate an OpenSSL private key
+      openssl_privatekey:
+        path: "{{ path_keys }}/tls.key"
+        size: 2048 
+
+    - name: generate an OpenSSL csr key
+      openssl_csr:
+        path: "{{ path_keys }}/tls.csr"
+        privatekey_path: "{{ path_keys }}/tls.key"
+
+    - name: generate an OpenSSL certificate
+      openssl_certificate:
+        provider: selfsigned
+        path: "{{ path_keys }}/tls.crt"
+        privatekey_path: "{{ path_keys }}/tls.key"
+        csr_path: "{{ path_keys }}/tls.csr"
+
+    - name: ensure nginx is enabled and started
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: insert firewalld rule for nginx
+      firewalld:
+        port: "{{ nginx_port_tls }}/tcp"
+        permanent: true
+        state: enabled
+        immediate: true
+      ignore_errors: true
+
+  post_tasks:
+    - name: check web site from control server
+      become: true
+      uri:
+        url: "https://{{ ansible_host }}:{{ nginx_port_tls }}"
+        validate_certs: no
+        return_content: true
+      connection: local
+      register: example_webpage_out
+      failed_when: example_webpage_out.status != 200
+
+  handlers:
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
