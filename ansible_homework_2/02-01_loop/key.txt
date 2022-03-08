@@ -1,0 +1,5 @@
+Пароль: 
+1234
+
+Команда для запуска: 
+ansible-playbook 02-01_loop.yaml --ask-vault-pass

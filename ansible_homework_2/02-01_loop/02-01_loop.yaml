@@ -1,0 +1,17 @@
+---
+- name: Adding users from the dictionary
+  hosts: nodes
+  become: true
+  vars_files:
+    - secrets.yaml
+  tasks:
+    - name: User addition cycle
+      ansible.builtin.user:
+        name: "{{ user.key }}"
+        comment: "Ansible-generated user"
+        password: "{{ user.value | password_hash('sha512') }}"
+      no_log: true
+      loop: "{{ lookup('dict', users_dict) }}"
+      loop_control:
+        loop_var: user
+        pause: 5
