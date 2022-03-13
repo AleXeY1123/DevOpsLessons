@@ -1,0 +1,33 @@
+---
+# tasks file for generate_key
+- name: install python-cryptography
+  yum:
+    name: python-cryptography
+    update_cache: true
+    state: present
+
+- name: creates directory keys
+  file:
+    path: "{{ path_keys }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0775
+    recurse: yes
+
+- name: generate an OpenSSL private key
+  openssl_privatekey:
+    path: "{{ path_keys }}/tls.key"
+    size: 2048 
+
+- name: generate an OpenSSL csr key
+  openssl_csr:
+    path: "{{ path_keys }}/tls.csr"
+    privatekey_path: "{{ path_keys }}/tls.key"
+
+- name: generate an OpenSSL certificate
+  openssl_certificate:
+    provider: selfsigned
+    path: "{{ path_keys }}/tls.crt"
+    privatekey_path: "{{ path_keys }}/tls.key"
+    csr_path: "{{ path_keys }}/tls.csr"

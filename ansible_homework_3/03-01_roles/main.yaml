@@ -1,0 +1,13 @@
+---
+- name: using roles
+  hosts: nodes
+  become: true
+  roles:
+    - role: generate_key
+      tags: 
+        - key 
+        - nginx
+    - role: install_nginx
+      tags: nginx
+    - role: install_mariadb
+      tags: mariadb
