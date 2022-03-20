@@ -1,0 +1,9 @@
+---
+- name: filter_mac
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: debug
+      debug:
+        msg: "{{ '4820F687A45B' | filter_mac }}"

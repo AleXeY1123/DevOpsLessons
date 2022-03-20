@@ -1,0 +1,39 @@
+- name: http module
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Install epel
+      yum:
+        name: epel-release
+        update_cache: true
+        state: present
+
+    - name: Install pip
+      yum:
+        name: python-pip
+        update_cache: true
+        state: present
+
+    - name: Install requests python package
+      pip:
+        name: requests
+
+    - name: http module python
+      http_modul_py:
+        adress: "https://www.youtube.com/dfghjk"
+      register: py_result
+
+    - name: print result http modul python
+      debug:
+        msg: "{{ py_result }}"
+
+    - name: http module bash
+      http_modul_sh:
+        adress: "https://yandex.ru"
+      register: bash_result
+
+    - name: print result http modul bash
+      debug:
+        msg: "{{ bash_result }}"

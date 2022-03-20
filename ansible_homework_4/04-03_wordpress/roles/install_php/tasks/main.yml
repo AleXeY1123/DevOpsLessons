@@ -1,0 +1,31 @@
+---
+# tasks file for install_php
+- name: Put repo files to /etc/yum.repos.d/ directory
+  copy:
+    src: epel.repo
+    dest: /etc/yum.repos.d/epel.repo
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Put repo files to /etc/yum.repos.d/ directory
+  copy:
+    src: remi-php74.repo
+    dest: /etc/yum.repos.d/remi-php74.repo
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Put repo files to /etc/yum.repos.d/ directory
+  copy:
+    src: remi-safe.repo
+    dest: /etc/yum.repos.d/remi-safe.repo
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Install packages from 'php_packages_list'
+  yum:
+    name: "{{ php_packages_list }}"
+    update_cache: true
+    state: present

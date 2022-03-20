@@ -1,0 +1,3 @@
+---
+# vars file for generate_key
+path_keys: "/etc/nginx/ssl/private"

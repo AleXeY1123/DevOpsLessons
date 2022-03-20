@@ -1,0 +1,10 @@
+---
+- name: using roles
+  hosts: nodes
+  become: true
+  roles:
+    - role: generate_key
+    - role: install_nginx
+    - role: install_mariadb
+    - role: install_php
+    - role: install_wordpress

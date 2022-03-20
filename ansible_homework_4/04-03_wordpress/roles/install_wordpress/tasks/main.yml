@@ -1,0 +1,87 @@
+---
+# tasks file for install_wordpress
+- name: Copy nginx configuration from template for wordpress
+  template:
+    src: templates/nginx-wordpress.conf.j2
+    dest: /etc/nginx/conf.d/tls.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Remove default /etc/php-fpm.d/www.conf file
+  file:
+    path: /etc/php-fpm.d/www.conf
+    state: absent
+
+- name: Copy wordpress.conf from files to /etc/php-fpm.d/wordpress.conf
+  copy:
+    src: files/wordpress.conf
+    dest: /etc/php-fpm.d/wordpress.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: >
+    Download WordPress from http://wordpress.org/wordpress-{{ wp_version }}.tar.gz
+    to /srv/ folder + checksum
+  get_url:
+    url: http://wordpress.org/wordpress-{{ wp_version }}.tar.gz
+    dest: /srv/
+    mode: "0644"
+
+- name: Unarchive wordpress to /srv folder
+  unarchive:
+    src: /srv/wordpress-{{ wp_version }}.tar.gz
+    dest: /srv/
+    remote_src: yes
+
+- name: Add linux group "wordpress"
+  group:
+    name: wordpress
+    state: present
+
+- name: >
+    Add linux user "wordpress" with group "wordpress"
+    and /srv/wordpress as homedir
+  user:
+    name: wordpress
+    group: wordpress
+    home: /srv/wordpress
+
+- name: Create mariadb database for wordpress
+  mysql_db:
+    name: "{{ wp_db_name }}"
+    state: present
+
+- name: Create WordPress database user
+  mysql_user:
+    name: "{{ wp_db_user }}"
+    password: "{{ wp_db_pass }}"
+    priv: "*.*:ALL"
+    state: present
+  no_log: yes
+
+- name: >
+    Copy WordPress config file from templates
+    to /srv/wordpress/wp-config.php
+  template:
+    src: templates/wp-config.php
+    dest: /srv/wordpress/wp-config.php
+    owner: wordpress
+    group: wordpress
+    mode: 0644
+
+- name: >
+    /srv/wordpress directory recursive rights
+    for wordpress user and group
+  file:
+    path: /srv/wordpress
+    owner: wordpress
+    group: wordpress
+    recurse: yes
+
+- name: Start php-fpm Service
+  service:
+    name: php-fpm
+    state: started
+    enabled: true
