@@ -1,0 +1,6 @@
+---
+- name: check connection to remote host
+  hosts: localhost
+  tasks:
+    - name: check connection
+      ping: 
